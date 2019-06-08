@@ -131,7 +131,7 @@ abstract class Endpoint
      */
     public function getPostBody(RequestInterface $req, $type = self::TYPE_FORM): array
     {
-        $params = $req->getBody();
+        $params = $req->getBody()->getContents();
         switch ($type) {
             case self::TYPE_FORM:
                 $arr = [];
@@ -233,7 +233,9 @@ abstract class Endpoint
                 $namespace = $this->getDefaultSpliceNamespace();
             }
             $className = trim($namespace, '\\') . '\\' . $name;
-            $this->splices[$name] = new $className($this->container);
+            /** @var Splice $splice */
+            $splice = new $className($this->container);
+            $this->splices[$name] = $splice;
         }
         return $this->splices[$name];
     }
