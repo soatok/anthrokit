@@ -31,6 +31,9 @@ abstract class Endpoint
     const TYPE_FORM = 'form-data';
     const TYPE_JSON = 'json';
 
+    /** @var string[] $allowedRedirectDomains */
+    protected $allowedRedirectDomains = [];
+
     /** @var Container $container */
     protected $container;
 
@@ -129,6 +132,38 @@ abstract class Endpoint
         /** @var Environment $twig */
         $twig = $this->container->get('twig');
         return $twig->render($file, $args);
+    }
+
+    /**
+     * @param string $url
+     * @param int $status
+     * @param bool $safe
+     * @return Response
+     */
+    public function redirect(
+        string $url,
+        int $status = StatusCode::HTTP_FOUND,
+        bool $safe = false
+    ): Response {
+        if (!$safe) {
+            $parsed = parse_url($url);
+            if (!empty($parsed['host'])) {
+                // A domain was specified.
+                if (!in_array($parsed['host'], $this->allowedRedirectDomains, true)) {
+                    // Fail closed by default; prevent open redirects.
+                    $url = '/';
+                }
+            }
+        }
+
+        return $this->cspBuilder->injectCSPHeader(
+            new Response(
+                $status,
+                new Headers([
+                    'Location' => $url
+                ])
+            )
+        );
     }
 
     /**
