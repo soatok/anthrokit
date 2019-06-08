@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace Soatok\AnthroKit;
 
 use Interop\Container\Exception\ContainerException;
+use ParagonIE\ConstantTime\Base64UrlSafe;
 use ParagonIE\CSPBuilder\CSPBuilder;
 use Psr\Http\Message\{
     RequestInterface,
@@ -28,6 +29,8 @@ use Twig\Error\{
  */
 abstract class Endpoint
 {
+    const CSRF_FORM_INDEX = 'csrf-protect';
+
     const TYPE_FORM = 'form-data';
     const TYPE_JSON = 'json';
 
@@ -58,6 +61,36 @@ abstract class Endpoint
             );
         }
         $this->cspBuilder = $cspBuilder;
+    }
+
+    /**
+     * @return string
+     * @throws \Exception
+     */
+    public function getCsrfToken(): string
+    {
+        if (empty($_SESSION['anti-csrf'])) {
+            $_SESSION['anti-csrf'] = random_bytes(33);
+        }
+        return Base64UrlSafe::encode($_SESSION['anti-csrf']);
+    }
+
+    /**
+     * @param array $postData
+     * @return bool
+     */
+    public function checkCsrfToken(array $postData = []): bool
+    {
+        if (empty($_SESSION['anti-csrf'])) {
+            return false;
+        }
+        if (empty($postData[static::CSRF_FORM_INDEX])) {
+            return false;
+        }
+        return hash_equals(
+            Base64UrlSafe::encode($_SESSION['anti-csrf']),
+            $postData[static::CSRF_FORM_INDEX]
+        );
     }
 
     /**
