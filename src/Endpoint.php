@@ -135,6 +135,7 @@ abstract class Endpoint
         if (!$this->checkCsrfToken($post)) {
             return [];
         }
+        unset($post[static::CSRF_FORM_INDEX]);
         return $post;
     }
 
