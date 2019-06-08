@@ -65,11 +65,11 @@ abstract class Endpoint
 
     /**
      * @param string $key
-     * @param $refValue
+     * @param mixed $refValue
      * @return Endpoint
      * @throws ContainerException
      */
-    public function setTwigVar(string $key, &$refValue): self
+    public function setTwigVar(string $key, $refValue): self
     {
         /** @var Environment $twig */
         $twig = $this->container->get('twig');
