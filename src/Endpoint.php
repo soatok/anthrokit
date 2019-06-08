@@ -64,6 +64,20 @@ abstract class Endpoint
     }
 
     /**
+     * @param string $key
+     * @param $refValue
+     * @return Endpoint
+     * @throws ContainerException
+     */
+    public function setTwigVar(string $key, &$refValue): self
+    {
+        /** @var Environment $twig */
+        $twig = $this->container->get('twig');
+        $twig->addGlobal($key, $refValue);
+        return $this;
+    }
+
+    /**
      * @return string
      * @throws \Exception
      */
