@@ -19,7 +19,7 @@
     "paragonie/corner": "^1|^2",
     "paragonie/csp-builder": "^2",
     "paragonie/easydb": "^2",
-    "paragonie/stern": "dev-master",
+    "paragonie/stern": "^0|^1",
     "slim/slim": "^3",
     "soatok/dhole-cryptography": "^1",
     "twig/twig": "^2"
