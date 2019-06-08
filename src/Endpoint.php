@@ -129,6 +129,20 @@ abstract class Endpoint
      * @param string $type
      * @return array
      */
+    public function post(RequestInterface $req, $type = self::TYPE_FORM): array
+    {
+        $post = $this->getPostBody($req, $type);
+        if (!$this->checkCsrfToken($post)) {
+            return [];
+        }
+        return $post;
+    }
+
+    /**
+     * @param RequestInterface $req
+     * @param string $type
+     * @return array
+     */
     public function getPostBody(RequestInterface $req, $type = self::TYPE_FORM): array
     {
         $params = $req->getBody()->getContents();
