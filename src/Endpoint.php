@@ -210,7 +210,13 @@ abstract class Endpoint
 
     /**
      * @param RequestInterface $request
+     * @param ResponseInterface|null $response
+     * @param array $routerParams
      * @return ResponseInterface
      */
-    public abstract function __invoke(RequestInterface $request): ResponseInterface;
+    public abstract function __invoke(
+        RequestInterface $request,
+        ?ResponseInterface $response = null,
+        array $routerParams = []
+    ): ResponseInterface;
 }
