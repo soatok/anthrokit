@@ -108,6 +108,17 @@ abstract class Endpoint
     }
 
     /**
+     * @param RequestInterface $request
+     * @return array
+     */
+    public function get(RequestInterface $request): array
+    {
+        $get = [];
+        parse_str($request->getUri()->getQuery(), $get);
+        return $get;
+    }
+
+    /**
      * @return string
      */
     public function getDefaultSpliceNamespace(): string
