@@ -138,8 +138,18 @@ abstract class Endpoint
     public function getDefaultSpliceNamespace(): string
     {
         $nsPath = explode('\\', get_class($this));
-        array_pop($nsPath);
-        array_pop($nsPath);
+        if (in_array('Endpoints', $nsPath, true)) {
+            while ($tmp = array_pop($nsPath)) {
+                if ($tmp === 'Endpoints') {
+                    break;
+                }
+            }
+        } else {
+            // Default: two levels up
+            array_pop($nsPath);
+            array_pop($nsPath);
+        }
+        // Append "Splices"
         $nsPath[] = 'Splices';
         return implode('\\', $nsPath);
     }
