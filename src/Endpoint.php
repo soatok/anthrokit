@@ -5,6 +5,8 @@ namespace Soatok\AnthroKit;
 use Interop\Container\Exception\ContainerException;
 use ParagonIE\ConstantTime\Base64UrlSafe;
 use ParagonIE\CSPBuilder\CSPBuilder;
+use ParagonIE\Ionizer\InputFilterContainer;
+use ParagonIE\Ionizer\InvalidDataException;
 use Psr\Http\Message\{
     RequestInterface,
     ResponseInterface
@@ -109,12 +111,24 @@ abstract class Endpoint
 
     /**
      * @param RequestInterface $request
+     * @param InputFilterContainer|null $filter
      * @return array
      */
-    public function get(RequestInterface $request): array
-    {
+    public function get(
+        RequestInterface $request,
+        ?InputFilterContainer $filter = null
+    ): array {
         $get = [];
         parse_str($request->getUri()->getQuery(), $get);
+        if ($filter) {
+            try {
+                return $filter($get);
+            } catch (InvalidDataException $ex) {
+                return [];
+            } catch (\TypeError $ex) {
+                return [];
+            }
+        }
         return $get;
     }
 
@@ -150,21 +164,46 @@ abstract class Endpoint
     }
 
     /**
+     * Process form data. Return [] if CSRF attack. Return []
+     * if invalid data.
+     *
      * @param RequestInterface $req
      * @param string $type
+     * @param InputFilterContainer|null $filter
      * @return array
      */
-    public function post(RequestInterface $req, $type = self::TYPE_FORM): array
-    {
+    public function post(
+        RequestInterface $req,
+        $type = self::TYPE_FORM,
+        ?InputFilterContainer $filter = null
+    ): array {
         $post = $this->getPostBody($req, $type);
         if (!$this->checkCsrfToken($post)) {
             return [];
         }
         unset($post[static::CSRF_FORM_INDEX]);
+        if ($filter) {
+            try {
+                return $filter($post);
+            } catch (InvalidDataException $ex) {
+                return [];
+            } catch (\TypeError $ex) {
+                return [];
+            }
+        }
         return $post;
     }
 
     /**
+     * Warning:
+     * This does not use Ionizer to force input to conform to an expected
+     * contract. Use at your own risk.
+     *
+     * Warning:
+     * This does not perform anti-CSRF validation. Use at your own risk.
+     *
+     * Try $this->post() instead.
+     *
      * @param RequestInterface $req
      * @param string $type
      * @return array
