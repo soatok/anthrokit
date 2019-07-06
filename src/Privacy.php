@@ -36,6 +36,31 @@ class Privacy
         file_put_contents($today, $keyring->save($key));
         return $key;
     }
+    /**
+     * Anonymize an IP address with BLAKE2b. Uses, by default,
+     * a per-day masking key.
+     *
+     * @param string $ip
+     * @param SymmetricKey|null $key
+     * @return string
+     *
+     * @throws CryptoException
+     * @throws \SodiumException
+     */
+    public function maskIPv6(string $ip, SymmetricKey $key = null): string
+    {
+        if (!$key) {
+            $key = $this->getDailyIPMaskKey();
+        }
+        $blake2bKey = sodium_crypto_generichash(
+            $key->getRawKeyMaterial(),
+            '',
+            SODIUM_CRYPTO_GENERICHASH_KEYBYTES
+        );
+        $packed = 'AnthroKit_IPv6_Mask' . inet_pton($ip);
+        $hashed = sodium_crypto_generichash($packed, $blake2bKey, 16);
+        return inet_ntop($hashed);
+    }
 
     /**
      * Anonymize an IP address with SipHash-2-4. Uses, by default,
