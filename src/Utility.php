@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 namespace Soatok\AnthroKit;
+
+use Slim\Http\Stream;
+
 /**
  * Class Utility
  * @package Soatok\AnthroKit
@@ -44,5 +47,16 @@ abstract class Utility
             default:
                 return $type;
         }
+    }
+
+    /**
+     * @param string $body
+     * @return Stream
+     */
+    public static function stringToStream(string $body): Stream
+    {
+        $resource = \fopen('php://temp', 'wb');
+        \fwrite($resource, $body);
+        return new Stream($resource);
     }
 }

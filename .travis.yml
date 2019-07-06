@@ -1,0 +1,13 @@
+language: php
+sudo: false
+
+matrix:
+  fast_finish: true
+  include:
+    - php: "7.3"
+
+install:
+  - composer install
+
+script:
+  - vendor/bin/phpunit
