@@ -2,6 +2,9 @@
 declare(strict_types=1);
 namespace Soatok\AnthroKit;
 
+use GuzzleHttp\Client;
+use ParagonIE\Certainty\RemoteFetch;
+use ParagonIE\Certainty\Exception\CertaintyException;
 use Slim\Http\Stream;
 
 /**
@@ -10,6 +13,29 @@ use Slim\Http\Stream;
  */
 abstract class Utility
 {
+    /**
+     * Get an HTTP client (Guzzle) hardened to use TLSv1.2 and the
+     * latest CACert bundle.
+     *
+     * @param string $certDir
+     * @return Client
+     * @throws CertaintyException
+     * @throws \SodiumException
+     */
+    public static function getHttpClient(string $certDir): Client
+    {
+        return new Client([
+            'curl.options' => [
+                // https://github.com/curl/curl/blob/6aa86c493bd77b70d1f5018e102bc3094290d588/include/curl/curl.h#L1927
+                CURLOPT_SSLVERSION =>
+                    CURL_SSLVERSION_TLSv1_2 | (CURL_SSLVERSION_TLSv1 << 16)
+            ],
+            'verify' => (new RemoteFetch($certDir))
+                ->getLatestBundle()
+                ->getFilePath()
+        ]);
+    }
+
     /**
      * @param string $class
      * @return string
