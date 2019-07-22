@@ -49,6 +49,36 @@ class PrivacyTest extends TestCase
         $this->assertNotEquals($b, $d, 'Domain separation failure (hash function).');
     }
 
+    public function testMaskInteger()
+    {
+        /** @var SymmetricKey $key */
+        $key = (new Keyring())->load(
+            'symmetricsIuY4SpxxNe267GEjiLfW4DMeWCS_taPe73clDUPH21_tHKFYX2uAA7QFifXOLvF'
+        );
+        $random = SymmetricKey::generate();
+        $testVectors = [
+            [-1, 3693932090],
+            [0, 307660403],
+            [1, 3687409113],
+            [2, 324202438],
+            [3, 2940513592],
+            [1 << 31, 3067997997]
+        ];
+        foreach ($testVectors as $row) {
+            [$in, $out] = $row;
+            $this->assertSame(
+                $out,
+                $this->privacy->maskInteger($in, $key),
+                'Deterministic'
+            );
+            $this->assertNotSame(
+                $out,
+                $this->privacy->maskInteger($in, $random),
+                'Random key matched'
+            );
+        }
+    }
+
     /**
      * @throws CryptoException
      * @throws \SodiumException

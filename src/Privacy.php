@@ -71,6 +71,27 @@ class Privacy
     }
 
     /**
+     * @param int $input
+     * @param SymmetricKey|null $key
+     * @return int
+     * @throws CryptoException
+     * @throws \SodiumException
+     */
+    public function maskInteger(int $input, SymmetricKey $key = null): int
+    {
+        if (!$key) {
+            $key = $this->getDailyIPMaskKey();
+        }
+        $hashed = sodium_crypto_generichash(
+            'AnthroKit_Mask_Integer:' . pack('V', $input),
+            $key->getRawKeyMaterial(),
+            16
+        );
+        $unpacked = \unpack('V', Binary::safeSubstr($hashed, 0, 8));
+        return $unpacked[1];
+    }
+
+    /**
      * Anonymize an IP address with BLAKE2b. Uses, by default,
      * a per-day masking key.
      *
