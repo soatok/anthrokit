@@ -2,7 +2,14 @@
 declare(strict_types=1);
 namespace Soatok\AnthroKit;
 
-use ParagonIE\ConstantTime\Binary;
+use ParagonIE\ConstantTime\{
+    Base32,
+    Binary
+};
+use Slim\Http\{
+    Headers,
+    Request
+};
 use Soatok\DholeCrypto\Exceptions\CryptoException;
 use Soatok\DholeCrypto\Key\SymmetricKey;
 use Soatok\DholeCrypto\Keyring;
@@ -36,6 +43,33 @@ class Privacy
         file_put_contents($today, $keyring->save($key));
         return $key;
     }
+
+    /**
+     * @param Request $request
+     * @return Request
+     * @throws CryptoException
+     * @throws \SodiumException
+     */
+    public function anonymize(Request $request): Request
+    {
+        $server = $request->getServerParams();
+        $server['HTTP_USER_AGENT'] = $this->maskUserAgent($server['HTTP_USER_AGENT']);
+        if (preg_match('#^\d\.\d\.\d\.\d$#', $server['REMOTE_ADDR'])) {
+            $server['REMOTE_ADDR'] = $this->maskIPv4($server['REMOTE_ADDR']);
+        } else {
+            $server['REMOTE_ADDR'] = $this->maskIPv6($server['REMOTE_ADDR']);
+        }
+        return new Request(
+            $request->getMethod(),
+            $request->getUri(),
+            new Headers($request->getHeaders()),
+            $request->getCookieParams(),
+            $server,
+            $request->getBody(),
+            $request->getUploadedFiles()
+        );
+    }
+
     /**
      * Anonymize an IP address with BLAKE2b. Uses, by default,
      * a per-day masking key.
@@ -87,5 +121,25 @@ class Privacy
         $hashed = sodium_crypto_shorthash($packed, $siphashKey);
         $unpacked = unpack('V', Binary::safeSubstr($hashed, 0, 4));
         return long2ip($unpacked[1]);
+    }
+
+    /**
+     * @param string $userAgent
+     * @param SymmetricKey|null $key
+     * @return string
+     * @throws CryptoException
+     * @throws \SodiumException
+     */
+    public function maskUserAgent(string $userAgent, SymmetricKey $key = null): string
+    {
+        if (!$key) {
+            $key = $this->getDailyIPMaskKey();
+        }
+        $hashed = sodium_crypto_generichash(
+            'AnthroKit_UA_Mask' . $userAgent,
+            $key->getRawKeyMaterial(),
+            32
+        );
+        return Base32::encodeUnpadded($hashed);
     }
 }

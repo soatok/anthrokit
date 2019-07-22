@@ -2,6 +2,8 @@
 namespace Soatok\AnthroKit\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Slim\Http\Environment;
+use Slim\Http\Request;
 use Soatok\AnthroKit\Privacy;
 use Soatok\DholeCrypto\Exceptions\CryptoException;
 use Soatok\DholeCrypto\Key\SymmetricKey;
@@ -20,6 +22,31 @@ class PrivacyTest extends TestCase
     {
         parent::setUp();
         $this->privacy = new Privacy();
+    }
+
+    /**
+     * @throws CryptoException
+     * @throws \SodiumException
+     */
+    public function testAnonymize()
+    {
+        $env = Environment::mock();
+        $request = Request::createFromEnvironment($env);
+
+        $a = $request->getServerParam('REMOTE_ADDR');
+        $anon = $this->privacy->anonymize($request);
+        $b = $anon->getServerParam('REMOTE_ADDR');
+        $this->assertNotEquals($a, $b, 'Anonymization failed.');
+
+        $c = $request->getServerParam('HTTP_USER_AGENT');
+        $anon = $this->privacy->anonymize($request);
+        $d = $anon->getServerParam('HTTP_USER_AGENT');
+        $this->assertNotEquals($c, $d, 'Anonymization failed.');
+
+        $this->assertNotEquals($a, $c, 'Domain separation failure (hash function).');
+        $this->assertNotEquals($a, $d, 'Domain separation failure (hash function).');
+        $this->assertNotEquals($b, $c, 'Domain separation failure (hash function).');
+        $this->assertNotEquals($b, $d, 'Domain separation failure (hash function).');
     }
 
     /**
