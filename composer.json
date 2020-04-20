@@ -17,7 +17,7 @@
     "ext-json": "*",
     "ext-sodium": "*",
     "monolog/monolog": "^1.17",
-    "paragonie/certainty": "^1|^2",
+    "paragonie/certainty": "^2.5",
     "paragonie/corner": "^1|^2",
     "paragonie/csp-builder": "^2",
     "paragonie/easydb": "^2",
